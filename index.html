@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Access</title>
+</head>
+<body>
+    <h1>Разрешите доступ к вашей камере</h1>
+    <video id="video" autoplay></video>
+    <button id="capture">Сфотографировать</button>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const ctx = canvas.getContext('2d');
+
+        // Запрос доступа к камере
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(error => {
+                console.error('Ошибка доступа к камере:', error);
+                alert('Не удалось получить доступ к камере');
+            });
+
+        // Сохранение фото по нажатию кнопки
+        captureButton.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Преобразование изображения в Blob и отправка на сервер
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('photo', blob, 'photo.jpg');
+
+                fetch('https://your-server.com/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Фото успешно отправлено:', data);
+                })
+                .catch(error => {
+                    console.error('Ошибка отправки фото:', error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
